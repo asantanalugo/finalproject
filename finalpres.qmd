@@ -1,24 +1,272 @@
 ---
-title: "Untitled"
+title: "Financial Crisis Stock Analysis"
 format: revealjs
 editor: visual
 ---
 
-## Quarto
+```{r output = FALSE}
+library(quantmod)
+library(lubridate)
 
-Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+start <- ymd("2008-01-01")
+end <- ymd("2026-01-01")
 
-## Bullets
+getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
+           from = start, to = end)
 
-When you click the **Render** button a document will be generated that includes:
+date_tib <- as_tibble(index(SPY)) |>
+  rename(start_date = value)
 
--   Content authored with markdown
--   Output from executable code
+qqq_tib <- as_tibble(QQQ)
+spy_tib <- as_tibble(SPY)
+xlv_tib <- as_tibble(XLV)
+xlf_tib <- as_tibble(XLF)
+xle_tib <- as_tibble(XLE)
+vnq_tib <- as_tibble(VNQ)
 
-## Code
+all_stocks <- bind_cols(date_tib, qqq_tib, spy_tib, xlv_tib, xlf_tib, xle_tib, vnq_tib)
 
-When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+stocks_long <- all_stocks |>
+  dplyr::select(start_date, QQQ.Adjusted, SPY.Adjusted, XLV.Adjusted, XLF.Adjusted,
+                XLE.Adjusted, VNQ.Adjusted) |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 QQQ = "QQQ.Adjusted",
+                                 sandp = "SPY.Adjusted",
+                                 XLV = "XLV.Adjusted", 
+                                 XLF = "XLF.Adjusted", 
+                                 XLE = "XLE.Adjusted", 
+                                 VNQ = "VNQ.Adjusted"
+                                 ))
+
+stocks_qqq <- stocks_long |> filter(Stock_Type == "QQQ")
+stocks_spy <- stocks_long |> filter(Stock_Type == "sandp")
+stocks_xlv <- stocks_long |> filter(Stock_Type == "XLV")
+stocks_xlf <- stocks_long |> filter(Stock_Type == "XLF")
+stocks_xle <- stocks_long |> filter(Stock_Type == "XLE")
+stocks_vnq <- stocks_long |> filter(Stock_Type == "VNQ")
+
+
+## looking at each ETF individually: 
+
+ggplot(data = stocks_qqq, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_spy, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_xlv, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_xlf, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_xle, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_vnq, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+```
+
+
+## Data Introduction
+
+  * Data taken from the quantmod() & lubridate()
+  * Pulled from yahoofinance.com
+  * Taking 6 ETF (Exchange Traded Funds) that track different industries
+  * 'SFY' (Tracks the S&P500), 'QQQ' (Tracks Tech with the S&P), 'XLV' (Tracks 
+  Health Care Sector), 'XLF' (Tracks Financial Sector), 'XLE' (Tracks Energy 
+  Sector), 'VNQ' (Tracks Real Estate Sector)
+
+## Question(s) of interest
+
+  * What drives trading volume across different market sectors, and how does it 
+  vary during periods of market stress?
+
+
+## Price (2008 - 2026)
 
 ```{r}
-1 + 1
+ggplot(data = stocks_long, aes(x = start_date, y = Price)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal(base_size = 24) +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() 
 ```
+
+## Volume (2008 - 2026)
+
+```{r output = FALSE}
+stocks_volume <- all_stocks |>
+  dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
+                XLE.Volume, VNQ.Volume) |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 QQQ = "QQQ.Volume",
+                                 sandp = "SPY.Volume",
+                                 XLV = "XLV.Volume", 
+                                 XLF = "XLF.Volume", 
+                                 XLE = "XLE.Volume", 
+                                 VNQ = "VNQ.Volume"
+                                 ))
+
+vol_qqq <- stocks_volume |> filter(Stock_Type == "QQQ")
+vol_spy <- stocks_volume |> filter(Stock_Type == "sandp")
+vol_xlv <- stocks_volume |> filter(Stock_Type == "XLV")
+vol_xlf <- stocks_volume |> filter(Stock_Type == "XLF")
+vol_xle <- stocks_volume |> filter(Stock_Type == "XLE")
+vol_vnq <- stocks_volume |> filter(Stock_Type == "VNQ")
+
+ggplot(data = stocks_qqq, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_spy, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_xlv, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_xlf, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_xle, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(data = stocks_vnq, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+```
+
+
+```{r}
+ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal(base_size = 24) +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() 
+```
+
+
+## Volume in the 2008 Financial Crisis 
+
+```{r output = FALSE}
+start_vol_08 <- ymd("2008-01-01")
+end_vol_11 <- ymd("2011-01-01")
+
+getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
+           from = start_vol_08, to = end_vol_11)
+
+date_tib <- as_tibble(index(SPY)) |>
+  rename(start_date = value)
+
+qqq_tib <- as_tibble(QQQ)
+spy_tib <- as_tibble(SPY)
+xlv_tib <- as_tibble(XLV)
+xlf_tib <- as_tibble(XLF)
+xle_tib <- as_tibble(XLE)
+vnq_tib <- as_tibble(VNQ)
+
+all_stocks <- bind_cols(date_tib, qqq_tib, spy_tib, xlv_tib, xlf_tib, xle_tib, vnq_tib)
+
+stocks_volume <- all_stocks |>
+  dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
+                XLE.Volume, VNQ.Volume) |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 QQQ = "QQQ.Volume",
+                                 sandp = "SPY.Volume",
+                                 XLV = "XLV.Volume", 
+                                 XLF = "XLF.Volume", 
+                                 XLE = "XLE.Volume", 
+                                 VNQ = "VNQ.Volume"
+                                 ))
+
+vol_qqq <- stocks_volume |> filter(Stock_Type == "QQQ")
+vol_spy <- stocks_volume |> filter(Stock_Type == "sandp")
+vol_xlv <- stocks_volume |> filter(Stock_Type == "XLV")
+vol_xlf <- stocks_volume |> filter(Stock_Type == "XLF")
+vol_xle <- stocks_volume |> filter(Stock_Type == "XLE")
+vol_vnq <- stocks_volume |> filter(Stock_Type == "VNQ")
+```
+
+```{r}
+ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal(base_size = 24) +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d()
+```
+
+
+## Volume in the 2020 Covid-19 Pandemic
+
+```{r output = FALSE}
+start_vol_2020 <- ymd("2020-01-01")
+end_vol_2023 <- ymd("2023-01-01")
+
+getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
+           from = start_vol_2020, to = end_vol_2023)
+
+date_tib <- as_tibble(index(SPY)) |>
+  rename(start_date = value)
+
+qqq_tib <- as_tibble(QQQ)
+spy_tib <- as_tibble(SPY)
+xlv_tib <- as_tibble(XLV)
+xlf_tib <- as_tibble(XLF)
+xle_tib <- as_tibble(XLE)
+vnq_tib <- as_tibble(VNQ)
+
+all_stocks <- bind_cols(date_tib, qqq_tib, spy_tib, xlv_tib, xlf_tib, xle_tib, vnq_tib)
+
+stocks_volume <- all_stocks |>
+  dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
+                XLE.Volume, VNQ.Volume) |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 QQQ = "QQQ.Volume",
+                                 sandp = "SPY.Volume",
+                                 XLV = "XLV.Volume", 
+                                 XLF = "XLF.Volume", 
+                                 XLE = "XLE.Volume", 
+                                 VNQ = "VNQ.Volume"
+                                 ))
+
+vol_qqq <- stocks_volume |> filter(Stock_Type == "QQQ")
+vol_spy <- stocks_volume |> filter(Stock_Type == "sandp")
+vol_xlv <- stocks_volume |> filter(Stock_Type == "XLV")
+vol_xlf <- stocks_volume |> filter(Stock_Type == "XLF")
+vol_xle <- stocks_volume |> filter(Stock_Type == "XLE")
+vol_vnq <- stocks_volume |> filter(Stock_Type == "VNQ")
+```
+
+```{r}
+ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal(base_size = 24) +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d()
+```
+
+## Looking ahead: 
+
+  * Model on predicting trading Volume (as a measure of volatility) 
+  * Model Viz
+  * Look into other measures of volatility
+
