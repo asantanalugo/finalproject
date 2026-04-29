@@ -9,7 +9,7 @@
 <link href="finalpres_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.8.25">
 
-  <title>Untitled</title>
+  <title>Financial Crisis Stock Analysis</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -126,32 +126,50 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Untitled</h1>
+  <h1 class="title">Financial Crisis Stock Analysis</h1>
 
 <div class="quarto-title-authors">
 </div>
 
 </section>
-<section id="quarto" class="slide level2">
-<h2>Quarto</h2>
-<p>Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <a href="https://quarto.org/docs/presentations/" class="uri">https://quarto.org/docs/presentations/</a>.</p>
-</section>
-<section id="bullets" class="slide level2">
-<h2>Bullets</h2>
-<p>When you click the <strong>Render</strong> button a document will be generated that includes:</p>
+<section id="data-introduction" class="slide level2">
+<h2>Data Introduction</h2>
 <ul>
-<li>Content authored with markdown</li>
-<li>Output from executable code</li>
+<li>Data taken from the quantmod() &amp; lubridate()</li>
+<li>Pulled from yahoofinance.com</li>
+<li>Taking 6 ETF (Exchange Traded Funds) that track different industries</li>
+<li>‘SFY’ (Tracks the S&amp;P500), ‘QQQ’ (Tracks Tech with the S&amp;P), ‘XLV’ (Tracks Health Care Sector), ‘XLF’ (Tracks Financial Sector), ‘XLE’ (Tracks Energy Sector), ‘VNQ’ (Tracks Real Estate Sector)</li>
 </ul>
 </section>
-<section id="code" class="slide level2">
-<h2>Code</h2>
-<p>When you click the <strong>Render</strong> button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:</p>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
-</div>
-</div>
+<section id="questions-of-interest" class="slide level2">
+<h2>Question(s) of interest</h2>
+<ul>
+<li>What drives trading volume across different market sectors, and how does it vary during periods of market stress?</li>
+</ul>
+</section>
+<section id="price-2008---2026" class="slide level2">
+<h2>Price (2008 - 2026)</h2>
+
+<img data-src="finalpres_files/figure-revealjs/unnamed-chunk-2-1.png" width="960" class="r-stretch"></section>
+<section id="volume-2008---2026" class="slide level2">
+<h2>Volume (2008 - 2026)</h2>
+
+<img data-src="finalpres_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch"></section>
+<section id="volume-in-the-2008-financial-crisis" class="slide level2">
+<h2>Volume in the 2008 Financial Crisis</h2>
+
+<img data-src="finalpres_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"></section>
+<section id="volume-in-the-2020-covid-19-pandemic" class="slide level2">
+<h2>Volume in the 2020 Covid-19 Pandemic</h2>
+
+<img data-src="finalpres_files/figure-revealjs/unnamed-chunk-8-1.png" width="960" class="r-stretch"></section>
+<section id="looking-ahead" class="slide level2">
+<h2>Looking ahead:</h2>
+<ul>
+<li>Model on predicting trading Volume (as a measure of volatility)</li>
+<li>Model Viz</li>
+<li>Look into other measures of volatility</li>
+</ul>
 
 </section>
     </div>
