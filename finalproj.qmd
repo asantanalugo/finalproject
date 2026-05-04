@@ -9,6 +9,7 @@ format:
 ```{r}
 library(quantmod)
 library(lubridate)
+library(tidyverse)
 
 start <- ymd("2008-01-01")
 end <- ymd("2026-01-01")
@@ -88,7 +89,6 @@ ggplot(data = stocks_long, aes(x = start_date, y = Price)) +
 ## look at different ETFs and compare 
 ## maybe do like a difference plots of volatility?? - difference between close and open?? and plot that agaist price
 ## build a model and try and predict at the end of a year what stock will be x, y, z??
-
 ```
 
 
@@ -246,6 +246,61 @@ ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
   theme_minimal() +
   scale_colour_viridis_d() +
   scale_fill_viridis_d()
+```
+
+## Looking at the Model
+
+```{r}
+## making the data set for the model: 
+stocks_long <- 
+  all_stocks |>
+  pivot_longer(cols = -start_date,
+               names_to = c("stock_type", ".value"),
+               names_sep = "\\.")
+
+## creating a log variable (dependent variable for the model)
+## creating volatility in the difference between high and low
+## creating return of the Adjusted price, adjusted minus last days price over the same
+
+stocks_long <- stocks_long |> 
+  group_by(stock_type) |> 
+  mutate(log_volume = log(Volume), 
+         volatility = High - Low, 
+         return = (Adjusted - lag(Adjusted)) / lag(Adjusted), 
+         stock_type = factor(stock_type)) 
+
+## building the model: 
+library(faraway)
+library(broom)
+library(GGally)
+
+mod <- lm(log_volume ~ return + volatility + stock_type + return:stock_type,
+               data = stocks_long)
+mod |> tidy()
+
+
+mod_pred <- 
+  ggpredict(mod, terms = c("return", 
+                           "volatility [all]", 
+                           "stock_type")) |> 
+  as.data.frame(terms_to_colnames = TRUE) |> 
+  as_tibble() |> 
+  mutate(volatility = as.numeric(as.character(volatility)))
+
+## mod viz 
+
+ggplot(data = stocks_long, aes(x = volatility, y = log_volume)) +
+  geom_point(aes(colour = stock_type), alpha = 0.03) +
+  geom_line(data = mod_pred, aes(x = volatility, y = predicted),
+    linewidth = 1.2) +
+  facet_wrap(~ stock_type) +
+  theme_minimal() +
+  scale_colour_viridis_d() +
+  labs(
+    x = "Daily volatility (High - Low)",
+    y = "Log trading volume",
+    title = "How Volatility Predicts Trading Volume Across ETFs"
+  )
 ```
 
 

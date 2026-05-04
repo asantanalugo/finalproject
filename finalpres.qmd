@@ -76,21 +76,16 @@ ggplot(data = stocks_vnq, aes(x = start_date, y = Price)) +
   theme_minimal()
 ```
 
-
 ## Data Introduction
 
-  * Data taken from the quantmod() & lubridate()
-  * Pulled from yahoofinance.com
-  * Taking 6 ETF (Exchange Traded Funds) that track different industries
-  * 'SFY' (Tracks the S&P500), 'QQQ' (Tracks Tech with the S&P), 'XLV' (Tracks 
-  Health Care Sector), 'XLF' (Tracks Financial Sector), 'XLE' (Tracks Energy 
-  Sector), 'VNQ' (Tracks Real Estate Sector)
+-   Data taken from the quantmod() & lubridate()
+-   Pulled from yahoofinance.com
+-   Taking 6 ETF (Exchange Traded Funds) that track different industries
+-   'SFY' (Tracks the S&P500), 'QQQ' (Tracks Tech with the S&P), 'XLV' (Tracks Health Care Sector), 'XLF' (Tracks Financial Sector), 'XLE' (Tracks Energy Sector), 'VNQ' (Tracks Real Estate Sector)
 
 ## Question(s) of interest
 
-  * What drives trading volume across different market sectors, and how does it 
-  vary during periods of market stress?
-
+-   What drives trading volume across different market sectors, and how does it vary during periods of market stress?
 
 ## Price (2008 - 2026)
 
@@ -151,7 +146,6 @@ ggplot(data = stocks_vnq, aes(x = start_date, y = Price)) +
   theme_minimal()
 ```
 
-
 ```{r}
 ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
   geom_line(aes(colour = Stock_Type)) +
@@ -161,8 +155,7 @@ ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
   scale_fill_viridis_d() 
 ```
 
-
-## Volume in the 2008 Financial Crisis 
+## Volume in the 2008 Financial Crisis
 
 ```{r output = FALSE}
 start_vol_08 <- ymd("2008-01-01")
@@ -212,7 +205,6 @@ ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
   scale_colour_viridis_d() +
   scale_fill_viridis_d()
 ```
-
 
 ## Volume in the 2020 Covid-19 Pandemic
 
@@ -265,9 +257,8 @@ ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
   scale_fill_viridis_d()
 ```
 
-## Looking ahead: 
+## Looking ahead:
 
-  * Model on predicting trading Volume (as a measure of volatility) 
-  * Model Viz
-  * Look into other measures of volatility
-
+-   Model on predicting trading Volume (as a measure of volatility)
+-   Model Viz
+-   Look into other measures of volatility
