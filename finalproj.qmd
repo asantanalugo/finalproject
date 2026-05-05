@@ -12,7 +12,7 @@ library(lubridate)
 library(tidyverse)
 
 start <- ymd("2008-01-01")
-end <- ymd("2026-01-01")
+end <- ymd("2026-05-01")
 
 getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
            from = start, to = end)
@@ -53,29 +53,11 @@ stocks_vnq <- stocks_long |> filter(Stock_Type == "VNQ")
 
 ## looking at each ETF individually: 
 
-ggplot(data = stocks_qqq, aes(x = start_date, y = Price)) +
+ggplot(data = stocks_long, aes(x = start_date, y = Price)) +
   geom_line() +
+  facet_wrap(~ Stock_Type) +
   theme_minimal()
 
-ggplot(data = stocks_spy, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
-
-ggplot(data = stocks_xlv, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
-
-ggplot(data = stocks_xlf, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
-
-ggplot(data = stocks_xle, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
-
-ggplot(data = stocks_vnq, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
 
 ## comparing them: 
 
@@ -95,10 +77,12 @@ ggplot(data = stocks_long, aes(x = start_date, y = Price)) +
 ## Volatility meassures: 
 
 ```{r}
+library(scales)
+
 stocks_volume <- all_stocks |>
   dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
                 XLE.Volume, VNQ.Volume) |>
-  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Volume") |>
   mutate(Stock_Type = fct_recode(Stock_Type,
                                  QQQ = "QQQ.Volume",
                                  sandp = "SPY.Volume",
@@ -115,143 +99,31 @@ vol_xlf <- stocks_volume |> filter(Stock_Type == "XLF")
 vol_xle <- stocks_volume |> filter(Stock_Type == "XLE")
 vol_vnq <- stocks_volume |> filter(Stock_Type == "VNQ")
 
-ggplot(data = stocks_qqq, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
+## overall volume
 
-ggplot(data = stocks_spy, aes(x = start_date, y = Price)) +
+ggplot(data = stocks_volume, aes(x = start_date, y = Volume)) +
   geom_line() +
-  theme_minimal()
-
-ggplot(data = stocks_xlv, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
-
-ggplot(data = stocks_xlf, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
-
-ggplot(data = stocks_xle, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
-
-ggplot(data = stocks_vnq, aes(x = start_date, y = Price)) +
-  geom_line() +
-  theme_minimal()
+  facet_wrap(~ Stock_Type) +
+  theme_minimal() + 
+  scale_y_continuous(labels = scales::comma)
 
 ## looking at all together: 
 
-ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
+ggplot(data = stocks_volume, aes(x = start_date, y = Volume)) +
   geom_line(aes(colour = Stock_Type)) +
   geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
   theme_minimal() +
   scale_colour_viridis_d() +
-  scale_fill_viridis_d() 
+  scale_fill_viridis_d() + 
+  scale_y_continuous(labels = scales::comma)
+
 ```
 
-
-```{r}
-## looking at volume in 2008-2011
-
-start_vol_08 <- ymd("2008-01-01")
-end_vol_11 <- ymd("2011-01-01")
-
-getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
-           from = start_vol_08, to = end_vol_11)
-
-date_tib <- as_tibble(index(SPY)) |>
-  rename(start_date = value)
-
-qqq_tib <- as_tibble(QQQ)
-spy_tib <- as_tibble(SPY)
-xlv_tib <- as_tibble(XLV)
-xlf_tib <- as_tibble(XLF)
-xle_tib <- as_tibble(XLE)
-vnq_tib <- as_tibble(VNQ)
-
-all_stocks <- bind_cols(date_tib, qqq_tib, spy_tib, xlv_tib, xlf_tib, xle_tib, vnq_tib)
-
-stocks_volume <- all_stocks |>
-  dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
-                XLE.Volume, VNQ.Volume) |>
-  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
-  mutate(Stock_Type = fct_recode(Stock_Type,
-                                 QQQ = "QQQ.Volume",
-                                 sandp = "SPY.Volume",
-                                 XLV = "XLV.Volume", 
-                                 XLF = "XLF.Volume", 
-                                 XLE = "XLE.Volume", 
-                                 VNQ = "VNQ.Volume"
-                                 ))
-
-vol_qqq <- stocks_volume |> filter(Stock_Type == "QQQ")
-vol_spy <- stocks_volume |> filter(Stock_Type == "sandp")
-vol_xlv <- stocks_volume |> filter(Stock_Type == "XLV")
-vol_xlf <- stocks_volume |> filter(Stock_Type == "XLF")
-vol_xle <- stocks_volume |> filter(Stock_Type == "XLE")
-vol_vnq <- stocks_volume |> filter(Stock_Type == "VNQ")
-
-ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
-  geom_line(aes(colour = Stock_Type)) +
-  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
-  theme_minimal() +
-  scale_colour_viridis_d() +
-  scale_fill_viridis_d()
-```
-
-```{r}
-## looking at volume in 2020-2023
-
-start_vol_2020 <- ymd("2020-01-01")
-end_vol_2023 <- ymd("2023-01-01")
-
-getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
-           from = start_vol_2020, to = end_vol_2023)
-
-date_tib <- as_tibble(index(SPY)) |>
-  rename(start_date = value)
-
-qqq_tib <- as_tibble(QQQ)
-spy_tib <- as_tibble(SPY)
-xlv_tib <- as_tibble(XLV)
-xlf_tib <- as_tibble(XLF)
-xle_tib <- as_tibble(XLE)
-vnq_tib <- as_tibble(VNQ)
-
-all_stocks <- bind_cols(date_tib, qqq_tib, spy_tib, xlv_tib, xlf_tib, xle_tib, vnq_tib)
-
-stocks_volume <- all_stocks |>
-  dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
-                XLE.Volume, VNQ.Volume) |>
-  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
-  mutate(Stock_Type = fct_recode(Stock_Type,
-                                 QQQ = "QQQ.Volume",
-                                 sandp = "SPY.Volume",
-                                 XLV = "XLV.Volume", 
-                                 XLF = "XLF.Volume", 
-                                 XLE = "XLE.Volume", 
-                                 VNQ = "VNQ.Volume"
-                                 ))
-
-vol_qqq <- stocks_volume |> filter(Stock_Type == "QQQ")
-vol_spy <- stocks_volume |> filter(Stock_Type == "sandp")
-vol_xlv <- stocks_volume |> filter(Stock_Type == "XLV")
-vol_xlf <- stocks_volume |> filter(Stock_Type == "XLF")
-vol_xle <- stocks_volume |> filter(Stock_Type == "XLE")
-vol_vnq <- stocks_volume |> filter(Stock_Type == "VNQ")
-
-ggplot(data = stocks_volume, aes(x = start_date, y = Price)) +
-  geom_line(aes(colour = Stock_Type)) +
-  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
-  theme_minimal() +
-  scale_colour_viridis_d() +
-  scale_fill_viridis_d()
-```
 
 ## Looking at the Model
 
 ```{r}
-## making the data set for the model: 
+## making the data set for the general model: 
 stocks_long <- 
   all_stocks |>
   pivot_longer(cols = -start_date,
@@ -266,7 +138,6 @@ stocks_long <- stocks_long |>
   group_by(stock_type) |> 
   mutate(log_volume = log(Volume), 
          volatility = High - Low, 
-         return = (Adjusted - lag(Adjusted)) / lag(Adjusted), 
          stock_type = factor(stock_type)) 
 
 ## building the model: 
@@ -274,33 +145,292 @@ library(faraway)
 library(broom)
 library(GGally)
 
-mod <- lm(log_volume ~ return + volatility + stock_type + return:stock_type,
+mod <- lm(volatility ~ log_volume + stock_type + log_volume:stock_type,
                data = stocks_long)
 mod |> tidy()
 
 
 mod_pred <- 
-  ggpredict(mod, terms = c("return", 
-                           "volatility [all]", 
+  ggpredict(mod, terms = c("log_volume [all]", 
                            "stock_type")) |> 
   as.data.frame(terms_to_colnames = TRUE) |> 
-  as_tibble() |> 
-  mutate(volatility = as.numeric(as.character(volatility)))
+  as_tibble()
+
 
 ## mod viz 
 
-ggplot(data = stocks_long, aes(x = volatility, y = log_volume)) +
-  geom_point(aes(colour = stock_type), alpha = 0.03) +
-  geom_line(data = mod_pred, aes(x = volatility, y = predicted),
-    linewidth = 1.2) +
+ggplot(data = stocks_long, aes(x = log_volume, y = volatility)) +
+  scale_colour_viridis_d() +
+  geom_point(aes(colour = stock_type), alpha = 0.10) +
+  geom_line(data = mod_pred, aes(x = log_volume, y = predicted), linewidth = 0.8) +
   facet_wrap(~ stock_type) +
   theme_minimal() +
-  scale_colour_viridis_d() +
-  labs(
-    x = "Daily volatility (High - Low)",
-    y = "Log trading volume",
-    title = "How Volatility Predicts Trading Volume Across ETFs"
-  )
+  labs(y = "Daily Volatility In Price",
+       x = "Trading Volume (log())",
+       title = "How Trading Volume Predicts Daily Price Volatility")
 ```
 
 
+
+```{r}
+## looking at volume in 2008-2011
+
+start_vol_08 <- ymd("2008-01-01")
+end_vol_11 <- ymd("2011-01-01")
+
+getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
+           from = start_vol_08, to = end_vol_11)
+
+date_tib_08 <- as_tibble(index(SPY)) |>
+  rename(start_date = value)
+
+qqq_tib_08 <- as_tibble(QQQ)
+spy_tib_08 <- as_tibble(SPY)
+xlv_tib_08 <- as_tibble(XLV)
+xlf_tib_08 <- as_tibble(XLF)
+xle_tib_08 <- as_tibble(XLE)
+vnq_tib_08 <- as_tibble(VNQ)
+
+all_stocks_08 <- bind_cols(date_tib_08, qqq_tib_08, spy_tib_08, xlv_tib_08, 
+                           xlf_tib_08, xle_tib_08, vnq_tib_08)
+
+stocks_volume_08 <- all_stocks_08 |>
+  dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
+                XLE.Volume, VNQ.Volume) |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Volume") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 QQQ = "QQQ.Volume",
+                                 sandp = "SPY.Volume",
+                                 XLV = "XLV.Volume", 
+                                 XLF = "XLF.Volume", 
+                                 XLE = "XLE.Volume", 
+                                 VNQ = "VNQ.Volume"
+                                 ))
+
+vol_qqq_08 <- stocks_volume_08 |> filter(Stock_Type == "QQQ")
+vol_spy_08 <- stocks_volume_08 |> filter(Stock_Type == "sandp")
+vol_xlv_08 <- stocks_volume_08 |> filter(Stock_Type == "XLV")
+vol_xlf_08 <- stocks_volume_08 |> filter(Stock_Type == "XLF")
+vol_xle_08 <- stocks_volume_08 |> filter(Stock_Type == "XLE")
+vol_vnq_08 <- stocks_volume_08 |> filter(Stock_Type == "VNQ")
+
+ggplot(data = stocks_volume_08, aes(x = start_date, y = Volume)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal() +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() + 
+  scale_y_continuous(labels = scales::comma)
+
+
+## looking at XLF (finance industry): 
+ggplot(data = vol_xlf_08, aes(x = start_date, y = Volume)) + 
+  geom_line() + 
+  scale_y_continuous(labels = scales::comma) + 
+  geom_vline(xintercept = as.Date("2008-03-14"), linetype = "dashed", ## bearn stearns
+             colour = "red") + 
+  geom_vline(xintercept = as.Date("2008-09-17"), linetype = "dashed", ## leham brothers & AIG 
+             colour = "blue") +
+  labs(title = "Volume Change of XLF (Financial Sector) During the 2008 Financial Crisis", 
+       x = "Date", caption = "Dotted red line shows March 14th & Dotted blue line shows September 17th, 2008")
+
+## looking at real estate: 
+ggplot(data = vol_vnq_08, aes(x = start_date, y = Volume)) + 
+  geom_line() + 
+  scale_y_continuous(labels = scales::comma) + 
+  geom_vline(xintercept = as.Date("2008-11-06"), linetype = "dashed", ## basis points & IMF 
+             colour = "red") + 
+  labs(title = "Volume Change of VNQ (Financial Sector) During the 2008 Financial Crisis", 
+       x = "Date", caption = "Dotted red line shows March 14th & Dotted blue line shows September 17th, 2008")
+```
+
+
+```{r}
+## looking at volume in 2020-2023
+
+start_vol_2020 <- ymd("2020-01-01")
+end_vol_2023 <- ymd("2023-01-01")
+
+getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
+           from = start_vol_2020, to = end_vol_2023)
+
+date_tib_20 <- as_tibble(index(SPY)) |>
+  rename(start_date = value)
+
+qqq_tib_20 <- as_tibble(QQQ)
+spy_tib_20 <- as_tibble(SPY)
+xlv_tib_20 <- as_tibble(XLV)
+xlf_tib_20 <- as_tibble(XLF)
+xle_tib_20 <- as_tibble(XLE)
+vnq_tib_20 <- as_tibble(VNQ)
+
+all_stocks_20 <- bind_cols(date_tib_20, qqq_tib_20, spy_tib_20, xlv_tib_20, 
+                           xlf_tib_20, xle_tib_20, vnq_tib_20)
+
+stocks_volume_20 <- all_stocks_20 |>
+  dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
+                XLE.Volume, VNQ.Volume) |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Volume") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 QQQ = "QQQ.Volume",
+                                 sandp = "SPY.Volume",
+                                 XLV = "XLV.Volume", 
+                                 XLF = "XLF.Volume", 
+                                 XLE = "XLE.Volume", 
+                                 VNQ = "VNQ.Volume"
+                                 ))
+
+## for later: 
+
+vol_qqq_20 <- stocks_volume_20 |> filter(Stock_Type == "QQQ")
+vol_spy_20 <- stocks_volume_20 |> filter(Stock_Type == "sandp")
+vol_xlv_20 <- stocks_volume_20 |> filter(Stock_Type == "XLV")
+vol_xlf_20 <- stocks_volume_20 |> filter(Stock_Type == "XLF")
+vol_xle_20 <- stocks_volume_20 |> filter(Stock_Type == "XLE")
+vol_vnq_20 <- stocks_volume_20 |> filter(Stock_Type == "VNQ")
+
+## volume from 2020 - 2023
+
+ggplot(data = stocks_volume_20, aes(x = start_date, y = Volume)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal() +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() + 
+  scale_y_continuous(labels = scales::comma)
+
+## looking at S&P 500: 
+
+ggplot(data = vol_spy_20, aes(x = start_date, y = Volume)) + 
+  geom_line() + 
+  scale_y_continuous(labels = scales::comma) + 
+  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed", 
+             colour = "red") + 
+  labs(title = "Volume Change of S&P 500 During the Covid-19 Pandemic", 
+       x = "Date", caption = "Dotted line shows March 13th, 2020")
+
+## looking at health care: 
+
+ggplot(data = vol_xlv_20, aes(x = start_date, y = Volume)) + 
+  geom_line() + 
+  scale_y_continuous(labels = scales::comma) + 
+  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed", ## start of pandemic
+             colour = "red") + 
+  geom_vline(xintercept = as.Date("2020-06-09"), linetype = "dashed", ## US surpassed 2 million cases 
+             colour = "blue") +
+  geom_vline(xintercept = as.Date("2022-01-31"), linetype = "dashed", ## Omicron rise & boost requirenmemt
+             colour = "green") + 
+  labs(title = "Volume Change of XLV (HealthCare) During the Covid-19 Pandemic", 
+       x = "Date", caption = "Dotted line shows March 13th, 2020")
+```
+
+## Looking at the past 3 years: 
+
+```{r}
+## looking at volume in 2023-today
+
+start_vol_2023 <- ymd("2023-01-01")
+end_vol_2026 <- ymd("2026-05-04")
+
+getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
+           from = start_vol_2023, to = end_vol_2026)
+
+date_tib_today <- as_tibble(index(SPY)) |>
+  rename(start_date = value)
+
+qqq_tib_today <- as_tibble(QQQ)
+spy_tib_today <- as_tibble(SPY)
+xlv_tib_today <- as_tibble(XLV)
+xlf_tib_today <- as_tibble(XLF)
+xle_tib_today <- as_tibble(XLE)
+vnq_tib_today <- as_tibble(VNQ)
+
+all_stocks_today <- bind_cols(date_tib_today, qqq_tib_today, spy_tib_today, xlv_tib_today, 
+                           xlf_tib_today, xle_tib_today, vnq_tib_today)
+
+stocks_volume_today <- all_stocks_today |>
+  dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
+                XLE.Volume, VNQ.Volume) |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Volume") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 QQQ = "QQQ.Volume",
+                                 sandp = "SPY.Volume",
+                                 XLV = "XLV.Volume", 
+                                 XLF = "XLF.Volume", 
+                                 XLE = "XLE.Volume", 
+                                 VNQ = "VNQ.Volume"
+                                 ))
+
+stocks_price_today <- all_stocks_today |>
+  dplyr::select(start_date, QQQ.Adjusted, SPY.Adjusted, XLV.Adjusted, XLF.Adjusted,
+                XLE.Adjusted, VNQ.Adjusted) |>
+  pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 QQQ = "QQQ.Adjusted",
+                                 sandp = "SPY.Adjusted",
+                                 XLV = "XLV.Adjusted", 
+                                 XLF = "XLF.Adjusted", 
+                                 XLE = "XLE.Adjusted", 
+                                 VNQ = "VNQ.Adjusted"
+                                 ))
+
+
+## COME BACK TOO WHAT DO I NEEDDD
+
+vol_qqq_today <- stocks_volume_20 |> filter(Stock_Type == "QQQ")
+vol_spy_today <- stocks_volume_20 |> filter(Stock_Type == "sandp")
+vol_xlv_today <- stocks_volume_20 |> filter(Stock_Type == "XLV")
+vol_xlf_today <- stocks_volume_20 |> filter(Stock_Type == "XLF")
+vol_xle_today <- stocks_volume_20 |> filter(Stock_Type == "XLE")
+vol_vnq_today <- stocks_volume_20 |> filter(Stock_Type == "VNQ")
+
+
+## volume from 2023 - today
+
+ggplot(data = stocks_volume_today, aes(x = start_date, y = Volume)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal() +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() + 
+  scale_y_continuous(labels = scales::comma)
+
+## price from 2023- today: 
+
+ggplot(data = stocks_price_today, aes(x = start_date, y = Price)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal() +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() + 
+  scale_y_continuous(labels = scales::comma)
+
+
+## missing below
+
+
+## looking at S&P 500: 
+
+ggplot(data = vol_spy_20, aes(x = start_date, y = Volume)) + 
+  geom_line() + 
+  scale_y_continuous(labels = scales::comma) + 
+  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed", 
+             colour = "red") + 
+  labs(title = "Volume Change of S&P 500 During the Covid-19 Pandemic", 
+       x = "Date", caption = "Dotted line shows March 13th, 2020")
+
+
+## looking at QQQ: 
+
+ggplot(data = vol_xlv_20, aes(x = start_date, y = Volume)) + 
+  geom_line() + 
+  scale_y_continuous(labels = scales::comma) + 
+  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed", ## start of pandemic
+             colour = "red") + 
+  geom_vline(xintercept = as.Date("2020-06-09"), linetype = "dashed", ## US surpassed 2 million cases 
+             colour = "blue") +
+  geom_vline(xintercept = as.Date("2022-01-31"), linetype = "dashed", ## Omicron rise & boost requirenmemt
+             colour = "green") + 
+  labs(title = "Volume Change of XLV (HealthCare) During the Covid-19 Pandemic", 
+       x = "Date", caption = "Dotted line shows March 13th, 2020")
+```
