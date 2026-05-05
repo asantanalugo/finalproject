@@ -1,12 +1,48 @@
 ---
-title: "Final Project"
+title: "Trading Volatility and Volume During Financial Crises across industry ETFs"
 author: "Alexa Santana"
 format: 
   html:
     embed-resources: true
 ---
 
-```{r}
+## Abstract:
+
+This research project will look at exploring the relationship between the daily 
+volatility in price in different industry's Exchange Traded Funds (ETFs), and 
+how trading volume impacts it during financial crises. The data was taken from 
+the 'quantmod()' package, which scrapes data Price and Volume data from 
+YahooFinance. There is strong statistical evidence showing positive correlation 
+between Volume traded and Daily Price changes in an ETF. This conclusion was 
+further explored through visualizations of Volume during financial crises. 
+
+
+## Introduction:
+
+The data that will be explored was taken from Yahoo Finance through the 'quantmod()'
+package. The objective of this research project, is to test whether the daily changes 
+in price of an ETF are correlated with the change in volume during major events 
+in financial crises. ETFs are 'basket' securities, which track benchmarks and 
+industries, through the weighting of a collection of companies in that industry.
+
+For this analysis, I pulled the 'SFY' ETF, which tracks the S&P 500 (500 largest 
+companies in the US Stock Market), 'QQQ' which tracks Companies within the technology 
+sector in the S&P, 'XLV' tracks the Health Care Sector, 'XLF' tracks Financial Sector, 
+'XLE' tracks Energy Sector, and 'VNQ' (Tracks Real Estate Sector. 
+
+Furthermore, the variables provided by the 'quantmod()' package, were Price, which
+included price at market open, highest price in a trading day, lowest price in a 
+trading day, and closing price, as well as Volume & adjusted price. Adjusted price 
+will be used for plotting price changes through time, as it controls for dividends 
+and any stock splits, which my delude the price of the ETF. Daily trading volatility 
+will be calculated by the change in price in a day. 
+
+
+## Relevant Visualizations:
+
+```{r output = FALSE}
+## loading in data and packages: 
+
 library(quantmod)
 library(lubridate)
 library(tidyverse)
@@ -14,6 +50,8 @@ library(tidyverse)
 start <- ymd("2008-01-01")
 end <- ymd("2026-05-01")
 
+
+## getting symbols of the ETFs
 getSymbols(c("SPY", "QQQ", "XLV", "XLF", "XLE", "VNQ"), src = "yahoo",
            from = start, to = end)
 
@@ -31,12 +69,12 @@ all_stocks <- bind_cols(date_tib, qqq_tib, spy_tib, xlv_tib, xlf_tib, xle_tib, v
 
 
 stocks_long <- all_stocks |>
-  dplyr::select(start_date, QQQ.Adjusted, SPY.Adjusted, XLV.Adjusted, XLF.Adjusted,
+  dplyr::select(start_date, SPY.Adjusted, QQQ.Adjusted, XLV.Adjusted, XLF.Adjusted,
                 XLE.Adjusted, VNQ.Adjusted) |>
   pivot_longer(2:7, names_to = "Stock_Type", values_to = "Price") |>
   mutate(Stock_Type = fct_recode(Stock_Type,
+                                 SYP = "SPY.Adjusted",
                                  QQQ = "QQQ.Adjusted",
-                                 sandp = "SPY.Adjusted",
                                  XLV = "XLV.Adjusted", 
                                  XLF = "XLF.Adjusted", 
                                  XLE = "XLE.Adjusted", 
@@ -44,40 +82,66 @@ stocks_long <- all_stocks |>
                                  ))
 
 stocks_qqq <- stocks_long |> filter(Stock_Type == "QQQ")
-stocks_spy <- stocks_long |> filter(Stock_Type == "sandp")
+stocks_spy <- stocks_long |> filter(Stock_Type == "SYP")
 stocks_xlv <- stocks_long |> filter(Stock_Type == "XLV")
 stocks_xlf <- stocks_long |> filter(Stock_Type == "XLF")
 stocks_xle <- stocks_long |> filter(Stock_Type == "XLE")
 stocks_vnq <- stocks_long |> filter(Stock_Type == "VNQ")
+```
 
+One of the key motivations for this project was going beyond price changes to 
+isolate volatility in the markets. A key factor that moves markets are news and 
+macroeconomic conditions. Thus, I want to show these market conditions and 
+volatility across industries, not only in prices, but also in Volume traded. 
 
-## looking at each ETF individually: 
+My expectation is that Volume will be strongly correlated with price, as volume 
+is the mechanism that moves price (Supply and Demand), yet, what ultimatly is 
+affected before price (hypothesis) is volume. Thus, the reason I make a distinction 
+and want to statistically test, as well as visualize it. 
+
+Since most volatility charts are shown through changes in price in the media and 
+in intro to finance classes, the first visualization is the change in price. I have 
+taken the time period from January 2008 to May 4th (deadline of this project), as
+this time period lets us explore two financial crises; the 2008 financial crisis 
+and the 2020 Covid-19 pandemic. 
+
+```{r}
+## looking at the Price of each ETF individually: 
 
 ggplot(data = stocks_long, aes(x = start_date, y = Price)) +
   geom_line() +
   facet_wrap(~ Stock_Type) +
-  theme_minimal()
+  theme_minimal() + 
+  labs(title = "Changes in Price from 2008 to 2026",
+       y = "Price (Adjusted)",
+       x = "Date")
 
 
-## comparing them: 
+## comparing them through time: 
 
 ggplot(data = stocks_long, aes(x = start_date, y = Price)) +
   geom_line(aes(colour = Stock_Type)) +
   geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
   theme_minimal() +
   scale_colour_viridis_d() +
-  scale_fill_viridis_d() 
-
-## look at different ETFs and compare 
-## maybe do like a difference plots of volatility?? - difference between close and open?? and plot that agaist price
-## build a model and try and predict at the end of a year what stock will be x, y, z??
+  scale_fill_viridis_d() + 
+  labs(title = "Changes in Price from 2008 to 2026",
+       y = "Price (Adjusted)",
+       x = "Date")
 ```
 
+Looking only at price, the visual correlation between QQQ (tech within the S&P) 
+and the S&P 500 is close. This can be explained, as about 40% of the weight within 
+the S&P 500 is only tech stocks.
 
-## Volatility meassures: 
 
-```{r}
-library(scales)
+### Volatility meassures: 
+
+```{r output = FALSE}
+## cleaning data for volume: 
+
+library(scales) ## for volume viz, makes y axis numbers, and not scientific 
+## notation, source in appendix
 
 stocks_volume <- all_stocks |>
   dplyr::select(start_date, QQQ.Volume, SPY.Volume, XLV.Volume, XLF.Volume,
@@ -85,7 +149,7 @@ stocks_volume <- all_stocks |>
   pivot_longer(2:7, names_to = "Stock_Type", values_to = "Volume") |>
   mutate(Stock_Type = fct_recode(Stock_Type,
                                  QQQ = "QQQ.Volume",
-                                 sandp = "SPY.Volume",
+                                 SPY = "SPY.Volume",
                                  XLV = "XLV.Volume", 
                                  XLF = "XLF.Volume", 
                                  XLE = "XLE.Volume", 
@@ -99,13 +163,22 @@ vol_xlf <- stocks_volume |> filter(Stock_Type == "XLF")
 vol_xle <- stocks_volume |> filter(Stock_Type == "XLE")
 vol_vnq <- stocks_volume |> filter(Stock_Type == "VNQ")
 
+stocks_rel <- stocks_volume |>
+  filter(Stock_Type %in% c("QQQ", "SPY"))
+```
+
+```{r}
 ## overall volume
 
 ggplot(data = stocks_volume, aes(x = start_date, y = Volume)) +
   geom_line() +
   facet_wrap(~ Stock_Type) +
   theme_minimal() + 
-  scale_y_continuous(labels = scales::comma)
+  scale_y_continuous(labels = label_number()) + 
+    labs(title = "Changes in Volume from 2008 to 2026",
+       y = "Volume",
+       x = "Date")
+
 
 ## looking at all together: 
 
@@ -115,14 +188,37 @@ ggplot(data = stocks_volume, aes(x = start_date, y = Volume)) +
   theme_minimal() +
   scale_colour_viridis_d() +
   scale_fill_viridis_d() + 
-  scale_y_continuous(labels = scales::comma)
+  scale_y_continuous(labels = label_number()) + 
+  labs(title = "Changes in Volume from 2008 to 2026",
+       y = "Volume",
+       x = "Date")
 
+
+## looking at the relationship explained above
+
+ggplot(data = stocks_rel, aes(x = start_date, y = Volume)) +
+  geom_line(aes(colour = Stock_Type)) +
+  geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
+  theme_minimal() +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() + 
+  scale_y_continuous(labels = label_number()) +
+  labs(title = "Changes in Volume in SPY vs. QQQ from 2008 to 2026",
+       y = "Volume",
+       x = "Date")
 ```
 
+When looking at the volume, even as the y-axis scale changes from price to number 
+of trades (definition of volume), the correlation is still there, although the 
+gap between the two seems to be wider. There is much more volume traded with the 
+S&P 500 than in QQQ. This could be due to the fact that less people own QQQ than 
+the S&P 500, or that investors are more confident in keeping QQQ than S&P 500 as 
+a whole, and are thus less responsive to market movements. 
 
-## Looking at the Model
 
-```{r}
+### Looking at the Model (Correlation between Volatility & Volume)
+
+```{r output = FALSE}
 ## making the data set for the general model: 
 stocks_long <- 
   all_stocks |>
@@ -144,10 +240,13 @@ stocks_long <- stocks_long |>
 library(faraway)
 library(broom)
 library(GGally)
+library(openintro)
+library(tidyverse)
+library(ggeffects)
+library(pander)
 
 mod <- lm(volatility ~ log_volume + stock_type + log_volume:stock_type,
                data = stocks_long)
-mod |> tidy()
 
 
 mod_pred <- 
@@ -155,7 +254,13 @@ mod_pred <-
                            "stock_type")) |> 
   as.data.frame(terms_to_colnames = TRUE) |> 
   as_tibble()
+```
 
+When building the model, we take the log version of volume, as it is a highly 
+skewed variable, and we are trying to not violate model assumptions. 
+
+```{r}
+mod |> tidy() |> pander()
 
 ## mod viz 
 
@@ -170,9 +275,32 @@ ggplot(data = stocks_long, aes(x = log_volume, y = volatility)) +
        title = "How Trading Volume Predicts Daily Price Volatility")
 ```
 
+Through the model output and the visualization, we can see that there is evidence 
+of a positive linear relationship between daily volatility in price and trading 
+volume. This supports the idea that volume can be used as an indicator for 
+volatility in markets; the greater the volume, the more volatility there is in 
+terms of price change per day. 
+
+QQQ and SPY seem to have different behaviors compared to the other ETFs, which 
+makes sense as the S&P 500 is highly responsive to the market, and QQQ is highly 
+correlated to the S&P 500. 
+
+Regarding the interaction term, I wanted to test of the effects of volume were 
+different for each industry, which does seem to be the case. The higher the volume 
+affects each industry differently. Our base group being QQQ, the coefficients 
+are negative, which indicate that the effects are on average lower for the industries 
+that aren't QQQ. 
 
 
-```{r}
+### Visualizing Volume (2008 - 2011)
+
+Now that we can take Volume as meassuremnt of volatility, I wanted to see if we 
+plotted the changes in volume during financial crises, if we could identify key
+market developments that would in turn change the price. Because these ETFs are 
+high liquid, my expectation is that we will be able to identify these trends 
+in the Volume traded, as we would be able to with price changes.  
+
+```{r output = FALSE}
 ## looking at volume in 2008-2011
 
 start_vol_08 <- ymd("2008-01-01")
@@ -213,39 +341,52 @@ vol_xlv_08 <- stocks_volume_08 |> filter(Stock_Type == "XLV")
 vol_xlf_08 <- stocks_volume_08 |> filter(Stock_Type == "XLF")
 vol_xle_08 <- stocks_volume_08 |> filter(Stock_Type == "XLE")
 vol_vnq_08 <- stocks_volume_08 |> filter(Stock_Type == "VNQ")
+```
 
+```{r}
 ggplot(data = stocks_volume_08, aes(x = start_date, y = Volume)) +
   geom_line(aes(colour = Stock_Type)) +
   geom_area(aes(fill = Stock_Type), alpha = 0.2, position = "identity") +
   theme_minimal() +
   scale_colour_viridis_d() +
   scale_fill_viridis_d() + 
-  scale_y_continuous(labels = scales::comma)
-
+  scale_y_continuous(labels = label_number()) + 
+  labs(title = "Changes in Volume from 2008 to 2011",
+       y = "Volume",
+       x = "Date")
 
 ## looking at XLF (finance industry): 
 ggplot(data = vol_xlf_08, aes(x = start_date, y = Volume)) + 
   geom_line() + 
-  scale_y_continuous(labels = scales::comma) + 
-  geom_vline(xintercept = as.Date("2008-03-14"), linetype = "dashed", ## bearn stearns
+  scale_y_continuous(labels = label_number()) + 
+  geom_vline(xintercept = as.Date("2008-03-14"), linetype = "dashed", ## bear stearns
              colour = "red") + 
-  geom_vline(xintercept = as.Date("2008-09-17"), linetype = "dashed", ## leham brothers & AIG 
+  geom_vline(xintercept = as.Date("2008-09-17"), linetype = "dashed", ## lehman brothers & AIG 
              colour = "blue") +
-  labs(title = "Volume Change of XLF (Financial Sector) During the 2008 Financial Crisis", 
+  labs(title = "Volume of XLF (Financial Sector) During the 2008 Crisis", 
        x = "Date", caption = "Dotted red line shows March 14th & Dotted blue line shows September 17th, 2008")
 
-## looking at real estate: 
+## looking at VNQ (real estate industry): 
 ggplot(data = vol_vnq_08, aes(x = start_date, y = Volume)) + 
   geom_line() + 
-  scale_y_continuous(labels = scales::comma) + 
+  scale_y_continuous(labels = label_number()) + 
   geom_vline(xintercept = as.Date("2008-11-06"), linetype = "dashed", ## basis points & IMF 
              colour = "red") + 
-  labs(title = "Volume Change of VNQ (Financial Sector) During the 2008 Financial Crisis", 
+  labs(title = "Volume of VNQ (Real Estate Sector) During the 2008 Crisis", 
        x = "Date", caption = "Dotted red line shows March 14th & Dotted blue line shows September 17th, 2008")
 ```
 
+For the 2008 crisis, we can identify that the red line in the finance industry 
+shows the collapse of Bear Stearns, one of the biggest Investment Banks to collapse, 
+and the beginning of the 2008 financial crisis. The blue line shows the collapse 
+of Lehman Brothers the Investment Bank, and AIG the insurance group that had backed 
+the mortgages that started the financial crisis. 
 
-```{r}
+
+### Visualizing Volume (2020 - 2023)
+
+```{r output = FALSE}
+
 ## looking at volume in 2020-2023
 
 start_vol_2020 <- ymd("2020-01-01")
@@ -288,7 +429,9 @@ vol_xlv_20 <- stocks_volume_20 |> filter(Stock_Type == "XLV")
 vol_xlf_20 <- stocks_volume_20 |> filter(Stock_Type == "XLF")
 vol_xle_20 <- stocks_volume_20 |> filter(Stock_Type == "XLE")
 vol_vnq_20 <- stocks_volume_20 |> filter(Stock_Type == "VNQ")
+```
 
+```{r}
 ## volume from 2020 - 2023
 
 ggplot(data = stocks_volume_20, aes(x = start_date, y = Volume)) +
@@ -297,14 +440,14 @@ ggplot(data = stocks_volume_20, aes(x = start_date, y = Volume)) +
   theme_minimal() +
   scale_colour_viridis_d() +
   scale_fill_viridis_d() + 
-  scale_y_continuous(labels = scales::comma)
+  scale_y_continuous(labels = label_number())
 
 ## looking at S&P 500: 
 
 ggplot(data = vol_spy_20, aes(x = start_date, y = Volume)) + 
   geom_line() + 
-  scale_y_continuous(labels = scales::comma) + 
-  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed", 
+  scale_y_continuous(labels = label_number()) + 
+  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed",
              colour = "red") + 
   labs(title = "Volume Change of S&P 500 During the Covid-19 Pandemic", 
        x = "Date", caption = "Dotted line shows March 13th, 2020")
@@ -313,20 +456,28 @@ ggplot(data = vol_spy_20, aes(x = start_date, y = Volume)) +
 
 ggplot(data = vol_xlv_20, aes(x = start_date, y = Volume)) + 
   geom_line() + 
-  scale_y_continuous(labels = scales::comma) + 
-  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed", ## start of pandemic
+  scale_y_continuous(labels = label_number()) + 
+  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed",
              colour = "red") + 
-  geom_vline(xintercept = as.Date("2020-06-09"), linetype = "dashed", ## US surpassed 2 million cases 
+  geom_vline(xintercept = as.Date("2020-06-09"), linetype = "dashed", 
              colour = "blue") +
-  geom_vline(xintercept = as.Date("2022-01-31"), linetype = "dashed", ## Omicron rise & boost requirenmemt
+  geom_vline(xintercept = as.Date("2022-01-31"), linetype = "dashed", 
              colour = "green") + 
   labs(title = "Volume Change of XLV (HealthCare) During the Covid-19 Pandemic", 
-       x = "Date", caption = "Dotted line shows March 13th, 2020")
+       x = "Date", caption = "Red Dotted shows March 13th 2020, Blue Dotted shows June 9th 2020, 
+       Green shows January 31st 2022")
 ```
 
-## Looking at the past 3 years: 
+Similarly, looking at the S&P 500, the red line shows the start of the pandemic 
+which is the biggest change in volume. For the health care sector, the red line 
+also depicts the start of the pandemic, the blue lines when the US surpassed 2 
+million Covid Cases, and the green line signals a boost in the Omicron variant 
+and the CDC requirement for people to get a 'boost' shot of the vaccine. 
 
-```{r}
+
+### Visualizing Volume (2023 - Today)
+
+```{r output = FALSE}
 ## looking at volume in 2023-today
 
 start_vol_2023 <- ymd("2023-01-01")
@@ -377,14 +528,15 @@ stocks_price_today <- all_stocks_today |>
 
 ## COME BACK TOO WHAT DO I NEEDDD
 
-vol_qqq_today <- stocks_volume_20 |> filter(Stock_Type == "QQQ")
-vol_spy_today <- stocks_volume_20 |> filter(Stock_Type == "sandp")
-vol_xlv_today <- stocks_volume_20 |> filter(Stock_Type == "XLV")
-vol_xlf_today <- stocks_volume_20 |> filter(Stock_Type == "XLF")
-vol_xle_today <- stocks_volume_20 |> filter(Stock_Type == "XLE")
-vol_vnq_today <- stocks_volume_20 |> filter(Stock_Type == "VNQ")
+vol_qqq_today <- stocks_volume_today |> filter(Stock_Type == "QQQ")
+vol_spy_today <- stocks_volume_today |> filter(Stock_Type == "sandp")
+vol_xlv_today <- stocks_volume_today |> filter(Stock_Type == "XLV")
+vol_xlf_today <- stocks_volume_today |> filter(Stock_Type == "XLF")
+vol_xle_today <- stocks_volume_today |> filter(Stock_Type == "XLE")
+vol_vnq_today <- stocks_volume_today |> filter(Stock_Type == "VNQ")
+```
 
-
+```{r}
 ## volume from 2023 - today
 
 ggplot(data = stocks_volume_today, aes(x = start_date, y = Volume)) +
@@ -393,7 +545,7 @@ ggplot(data = stocks_volume_today, aes(x = start_date, y = Volume)) +
   theme_minimal() +
   scale_colour_viridis_d() +
   scale_fill_viridis_d() + 
-  scale_y_continuous(labels = scales::comma)
+  scale_y_continuous(labels = label_number())
 
 ## price from 2023- today: 
 
@@ -406,31 +558,57 @@ ggplot(data = stocks_price_today, aes(x = start_date, y = Price)) +
   scale_y_continuous(labels = scales::comma)
 
 
-## missing below
-
-
 ## looking at S&P 500: 
 
-ggplot(data = vol_spy_20, aes(x = start_date, y = Volume)) + 
+ggplot(data = vol_spy_today, aes(x = start_date, y = Volume)) + 
   geom_line() + 
-  scale_y_continuous(labels = scales::comma) + 
-  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed", 
+  scale_y_continuous(labels = label_number()) + 
+  geom_vline(xintercept = as.Date("2025-04-02"), linetype = "dashed", ## liberation day
              colour = "red") + 
-  labs(title = "Volume Change of S&P 500 During the Covid-19 Pandemic", 
-       x = "Date", caption = "Dotted line shows March 13th, 2020")
+  labs(title = "Volume Change of S&P 500 from 2023 - Today", 
+       x = "Date", caption = "Dotted line shows April 2nd, 2025")
 
 
 ## looking at QQQ: 
 
-ggplot(data = vol_xlv_20, aes(x = start_date, y = Volume)) + 
+ggplot(data = vol_qqq_today, aes(x = start_date, y = Volume)) + 
   geom_line() + 
-  scale_y_continuous(labels = scales::comma) + 
-  geom_vline(xintercept = as.Date("2020-03-13"), linetype = "dashed", ## start of pandemic
+  scale_y_continuous(labels = label_number()) + 
+  geom_vline(xintercept = as.Date("2025-04-02"), linetype = "dashed", ## liberation day
              colour = "red") + 
-  geom_vline(xintercept = as.Date("2020-06-09"), linetype = "dashed", ## US surpassed 2 million cases 
-             colour = "blue") +
-  geom_vline(xintercept = as.Date("2022-01-31"), linetype = "dashed", ## Omicron rise & boost requirenmemt
-             colour = "green") + 
-  labs(title = "Volume Change of XLV (HealthCare) During the Covid-19 Pandemic", 
-       x = "Date", caption = "Dotted line shows March 13th, 2020")
+  labs(title = "Volume Change of QQQ from 2023 - Today", 
+       x = "Date", caption = "Dotted line shows April 2nd, 2025")
 ```
+
+We can see liberation day through volume in both of the dotted lines. This is the
+most significant macro event in the past 3 years according to volume. Not even 
+the war in Iran or other Middle Eastern conflicts have created more volatility 
+in equity markets. 
+
+
+## Conclusion: 
+
+Volume is a powerful variable that can help predict and evaluate volatility in 
+markets, especially with the Technology sector and the S&P 500. We can see the 
+correlation through the model, and its immediate response to macroeconomic events. 
+
+In the future, it would be interesting to see the difference in volume and its 
+impact on price, on macro news vs. a change in monetary and fiscal policy. All 
+the spices that I point out are major shocks to markets that are 'macro' events, 
+but a lot of these lower spikes are related to interest rates. 
+
+
+## Appendix: 
+
+  * Blog Post Link: https://asantanalugo.github.io/ds334_blog/
+  * GitHub Repository: https://github.com/asantanalugo/finalproject
+  * For adjusting the Y-axis from scientific notation, I asked Gemini: 
+    * Prompt: How can I make the Y-Axis of my plot go from Scientific notation 
+    to normal numbers in R using the scale_y_continuous I used in class?
+    * Response: Transitioning from scientific notation to "normal" numbers in 
+    ggplot2 is a common hurdle. By default, R switches to scientific notation 
+    once numbers get sufficiently large or small to keep the labels from 
+    overlapping. To fix this within scale_y_continuous, you’ll want to use the 
+    labels argument combined with the scales package.
+    The Quick Fix The most straightforward way is to use scales::label_comma() 
+    (for commas) or scales::label_number() (for plain numbers).
